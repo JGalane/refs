@@ -30,7 +30,9 @@ if has('autocmd')
   autocmd FileType text :call SetTextEnvironment()
   autocmd FileType *.cc,*.hh,*.java,*.proto setlocal ts=2 sw=2 smartindent
 
+  " FileType doesn't recognize md for some reason???
   autocmd BufNewFile,BufFilePre,BufRead *.md set filetype=markdown
+  autocmd BufNewFile,BufFilePre,BufRead *.md :call SetTextEnvironment()
 endif
 
 " -------------
