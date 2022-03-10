@@ -29,6 +29,8 @@ if has('autocmd')
   " Custom whitespace settings for different filetypes
   autocmd FileType text :call SetTextEnvironment()
   autocmd FileType *.cc,*.hh,*.java,*.proto setlocal ts=2 sw=2 smartindent
+
+  autocmd BufNewFile,BufFilePre,BufRead *.md set filetype=markdown
 endif
 
 " -------------
@@ -165,5 +167,5 @@ let g:cpp_simple_highlight = 1
 let g:cpp_attributes_hightlight = 1
 
 " awesome-color-schemes
-colorscheme darkblue
+colorscheme focuspoint
 syntax enable

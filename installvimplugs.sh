@@ -6,6 +6,8 @@ curl -LSso ~/.vim/autoload/pathogen.vim https://tpo.pe/pathogen.vim
 
 cd ~/.vim/bundle
 
+rm -rf *
+
 git clone https://github.com/ctrlpvim/ctrlp.vim.git
 git clone https://github.com/preservim/tagbar.git
 git clone https://github.com/airblade/vim-gitgutter.git
