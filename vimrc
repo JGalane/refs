@@ -29,6 +29,10 @@ if has('autocmd')
   " Custom whitespace settings for different filetypes
   autocmd FileType text :call SetTextEnvironment()
   autocmd FileType *.cc,*.hh,*.java,*.proto setlocal ts=2 sw=2 smartindent
+
+  " FileType doesn't recognize md for some reason???
+  autocmd BufNewFile,BufFilePre,BufRead *.md set filetype=markdown
+  autocmd BufNewFile,BufFilePre,BufRead *.md :call SetTextEnvironment()
 endif
 
 " -------------
@@ -165,5 +169,9 @@ let g:cpp_simple_highlight = 1
 let g:cpp_attributes_hightlight = 1
 
 " awesome-color-schemes
-colorscheme darkblue
+colorscheme focuspoint
 syntax enable
+
+" vim-markdown
+let g:vim_markdown_folding_disabled = 1
+let g:vim_markdown_toc_autofit = 1
