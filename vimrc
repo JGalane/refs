@@ -1,10 +1,20 @@
 
-" -----------
-" | GENERAL |
-" -----------
+"  ---------------------
+"  | TABLE OF CONTENTS |
+"  ---------------------
+"  1. GENERAL
+"  2. AUTOCOMMANDS
+"  3. COMMANDS
+"  4. FUNCTIONS
+"  5. MAPPINGS 
+"  6. PLUGIN STUFF
+
+" --------------
+" | 1. GENERAL |
+" --------------
 set tabstop=2
 set shiftwidth=2
-"set textwidth=80
+set textwidth=0
 set expandtab
 set smartindent
 set autoindent
@@ -19,9 +29,15 @@ set tags=~/tags;/
 set noswapfile
 set nocompatible
 
+
+" -------------------
+" | 2. AUTOCOMMANDS |
+" -------------------
 if has('autocmd')
   " Enable filetype detection
   filetype on
+
+  autocmd BufWritePost vimrc,.vimrc source $MYVIMRC
 
   " Opens help menus vertically
   autocmd FileType help wincmd L
@@ -35,9 +51,16 @@ if has('autocmd')
   autocmd BufNewFile,BufFilePre,BufRead *.md :call SetTextEnvironment()
 endif
 
-" -------------
-" | FUNCTIONS |
-" -------------
+
+" ---------------
+" | 3. COMMANDS |
+" ---------------
+:command! Vrc :normal <C-w>v<C-w>l :edit ~/.vimrc
+
+
+" ----------------
+" | 4. FUNCTIONS |
+" ----------------
 function! NumberToggle()
     if(&relativenumber == 1)
         set nornu
@@ -74,19 +97,9 @@ function! FormatTextDoc()
 endfunc
 
 
-" ------------
-" | COMMANDS |
-" ------------
-":command LogC :normal o LOG(INFO, "");<ESC> F"i
-":command LogJ :normal o System.out.println("");<ESC> F"i
-":command LineC :normal ^i//<ESC>
-":command Vimrc :edit ~/.vimrc
-:command Vrc :normal <C-w>v<C-w>l :edit ~/.vimrc
-
-
-" -----------------------
-" | GLORIOUS REMAPPINGS |
-" -----------------------
+" ---------------
+" | 5. MAPPINGS |
+" ---------------
 noremap <Up>    <Nop>
 noremap <Down>  <Nop>
 noremap <Left>  <Nop>
@@ -95,35 +108,41 @@ noremap <Right> <Nop>
 let mapleader=" "
 
 " Utility Mappings
+noremap <Leader>ev :vsplit $MYVIMRC<cr>
 noremap <Leader>n :call NumberToggle()<cr>
 noremap <Leader>h :call HighlightToggle()<cr>
 noremap <Leader>i :call FormatTextDoc()<cr>
 noremap <Leader>o o<cr>
-noremap <Leader>b I<T><Esc> A</T><Esc>F<
 
 " Buffers
-noremap <Leader>q :bp<cr>
-noremap <Leader>e :bn<cr>
-noremap <Leader>r :ls<cr>
+noremap [b :bprev<cr>
+noremap ]b :bnext<cr>
+noremap <Leader>b :ls<cr>
 noremap <Leader>t :bd<cr>
 
 " Panes
-noremap <Leader>f <C-w>s
-noremap <Leader>v <C-w>v<C-w>l
-noremap <Leader>w <C-w>k
-noremap <Leader>s <C-w>j
-noremap <Leader>a <C-w>h
-noremap <Leader>d <C-w>l
+noremap <C-k> <C-w>k
+noremap <C-j> <C-w>j
+noremap <C-h> <C-w>h
+noremap <C-l> <C-w>l
+noremap <C-w>v <C-w>v<C-w>l
 
 " Tabs
-"noremap <Leader>z :tabp<cr>
 noremap <Leader>x :tabe<cr>
-"noremap <Leader>c :tabn<cr>
+
+" Quickfix List
+noremap [q :cprev<cr>
+noremap ]q :cnext<cr>
+noremap <Leader>c :clist<cr>
+noremap <C-s> :vimgrep /<C-r><C-w>/ %<cr> :clist<cr>
+
+" Writing
+inoremap <C-u> <esc>viwUi
 
 
-" ----------------
-" | PLUGIN STUFF |
-" ----------------
+" -------------------
+" | 6. PLUGIN STUFF |
+" -------------------
 execute pathogen#infect()
 
 " CtrlP
@@ -170,8 +189,5 @@ let g:cpp_attributes_hightlight = 1
 
 " awesome-color-schemes
 colorscheme focuspoint
+"colorscheme desert
 syntax enable
-
-" vim-markdown
-let g:vim_markdown_folding_disabled = 1
-let g:vim_markdown_toc_autofit = 1
