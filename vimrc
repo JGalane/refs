@@ -37,18 +37,24 @@ if has('autocmd')
   " Enable filetype detection
   filetype on
 
-  autocmd BufWritePost vimrc,.vimrc source $MYVIMRC
+  " Grouping everyone together while this list is small
+  augroup all_autocmds
+      autocmd!
 
-  " Opens help menus vertically
-  autocmd FileType help wincmd L
+      autocmd BufWritePost vimrc,.vimrc source $MYVIMRC
 
-  " Custom whitespace settings for different filetypes
-  autocmd FileType text :call SetTextEnvironment()
-  autocmd FileType *.cc,*.hh,*.java,*.proto setlocal ts=2 sw=2 smartindent
+      " Opens help menus vertically
+      autocmd FileType help wincmd L
 
-  " FileType doesn't recognize md for some reason???
-  autocmd BufNewFile,BufFilePre,BufRead *.md set filetype=markdown
-  autocmd BufNewFile,BufFilePre,BufRead *.md :call SetTextEnvironment()
+      " Custom format settings for different filetypes
+      autocmd FileType text :call SetTextEnvironment()
+      autocmd FileType cpp  :call SetCppEnvironment()
+      autocmd FileType java :call SetJavaEnvironment()
+      autocmd FileType proto setlocal ts=2 sw=2 smartindent
+
+      autocmd BufNewFile,BufFilePre,BufRead *.md set filetype=markdown
+      autocmd BufNewFile,BufFilePre,BufRead *.md :call SetTextEnvironment()
+  augroup END
 endif
 
 
@@ -78,6 +84,22 @@ function! HighlightToggle()
     endif
 endfunc
 
+function! SetCppEnvironment()
+    set tabstop=2
+    set shiftwidth=2
+    set smartindent
+    inoremap <buffer> iff if ()<left>
+    inoremap <buffer> LOG LOG(DEVEL, "");<left><left><left>
+endfunc
+
+function! SetJavaEnvironment()
+    set tabstop=2
+    set shiftwidth=2
+    set smartindent
+    inoremap <buffer> iff if ()<left>
+    inoremap <buffer> LOG System.out.println("");<left><left><left>
+endfunc
+
 function! SetTextEnvironment()
     set textwidth=90
     set tabstop=4
@@ -105,39 +127,49 @@ noremap <Down>  <Nop>
 noremap <Left>  <Nop>
 noremap <Right> <Nop>
 
-let mapleader=" "
-
 " Utility Mappings
-noremap <Leader>ev :vsplit $MYVIMRC<cr>
-noremap <Leader>n :call NumberToggle()<cr>
-noremap <Leader>h :call HighlightToggle()<cr>
-noremap <Leader>i :call FormatTextDoc()<cr>
-noremap <Leader>o o<cr>
+noremap <Space>ve <C-w>v<C-w>l :edit $MYVIMRC<cr>
+noremap <Space>vs :source $MYVIMRC<cr>
+noremap <Space>n :call NumberToggle()<cr>
+noremap <Space>h :call HighlightToggle()<cr>
+noremap <Space>ft :call FormatTextDoc()<cr>
+noremap <Space>o o<cr>
+noremap <Space>m :messages<cr>
+
+" Movement
+noremap H ^
+noremap L $
 
 " Buffers
-noremap [b :bprev<cr>
-noremap ]b :bnext<cr>
-noremap <Leader>b :ls<cr>
-noremap <Leader>t :bd<cr>
+noremap [b :bp<cr>
+noremap ]b :bn<cr>
+noremap <Space>b :ls<cr>
+noremap <Space>d :bd<cr>
 
-" Panes
+" Windows
 noremap <C-k> <C-w>k
 noremap <C-j> <C-w>j
 noremap <C-h> <C-w>h
 noremap <C-l> <C-w>l
-noremap <C-w>v <C-w>v<C-w>l
+noremap <Space>s <C-w>s
+noremap <Space>v <C-w>v<C-w>l
 
 " Tabs
-noremap <Leader>x :tabe<cr>
+noremap <Space>t :tabe<cr>
 
 " Quickfix List
-noremap [q :cprev<cr>
-noremap ]q :cnext<cr>
-noremap <Leader>c :clist<cr>
+noremap [q :cp<cr>
+noremap ]q :cn<cr>
+noremap <Space>c :clist<cr>
 noremap <C-s> :vimgrep /<C-r><C-w>/ %<cr> :clist<cr>
 
 " Writing
 inoremap <C-u> <esc>viwUi
+vnoremap <C-q> <esc>`>a"<esc>`<i"<esc>
+
+" Abbreviations (just some examples for now so I don't forget)
+iabbrev waht what
+iabbrev tehn then
 
 
 " -------------------
@@ -167,11 +199,10 @@ highlight GitGutterDelete guifg=#ff2222 ctermfg=1
 highlight GitGutterDeleteLine guifg=#000000 ctermfg=1
 
 " Fugitive
-let mapleader="\<tab>"
-noremap <Leader>g :Git<cr>:exe "resize " . (winheight(0) * 1/2)<cr>
-noremap <Leader>l :Git log<cr><C-w>k<C-w>L
-noremap <Leader>d :Gvdiffsplit!<cr> <C-w>h
-noremap <Leader>b :G blame<cr>
+noremap <Space>gg :Git<cr>:exe "resize " . (winheight(0) * 1/2)<cr>
+noremap <Space>gl :Git log<cr><C-w>k<C-w>L
+noremap <Space>gd :Gvdiffsplit!<cr> <C-w>h
+noremap <Space>gb :G blame<cr>
 
 " Java Syntax
 highlight link javaIdentifier NONE
@@ -189,5 +220,4 @@ let g:cpp_attributes_hightlight = 1
 
 " awesome-color-schemes
 colorscheme focuspoint
-"colorscheme desert
 syntax enable
