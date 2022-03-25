@@ -12,6 +12,7 @@
 " --------------
 " | 1. GENERAL |
 " --------------
+" Basic Settings ---------------------- {{{
 set tabstop=2
 set shiftwidth=2
 set textwidth=0
@@ -28,11 +29,32 @@ set so=5
 set tags=~/tags;/
 set noswapfile
 set nocompatible
+" }}}
+" Status Line ---------------------- {{{
+" NOTE: you can view HL groups with :so $VIMRUNTIME/syntax/hitest.vim
+set laststatus=2
+set statusline= 
+set statusline+=%#Keyword#
+set statusline+=‹‹\ %n\ ››         " Buffer number
+set statusline+=%#Constant#
+set statusline+=\ %f               " File path
+set statusline+=%#Type#
+set statusline+=\ \‹‹\ %y\ ››\     " File type
 
+set statusline+=%#CursorColumn#
+set statusline+=%=                 " Switch to the right side
+set statusline+=Line\ 
+set statusline+=%l                 " Current Line
+set statusline+=/
+set statusline+=%L                 " Total Lines
+set statusline+=\ ::\ Col\ 
+set statusline+=%2c                " Current Column
+" }}}
 
 " -------------------
 " | 2. AUTOCOMMANDS |
 " -------------------
+" Autocommands ---------------------- {{{
 if has('autocmd')
   " Enable filetype detection
   filetype on
@@ -41,7 +63,11 @@ if has('autocmd')
   augroup all_autocmds
       autocmd!
 
+      " Autosurce the vimrc on write
       autocmd BufWritePost vimrc,.vimrc source $MYVIMRC
+
+      " Enable folding for vimscript
+      autocmd Filetype vim setlocal foldmethod=marker
 
       " Opens help menus vertically
       autocmd FileType help wincmd L
@@ -56,17 +82,27 @@ if has('autocmd')
       autocmd BufNewFile,BufFilePre,BufRead *.md :call SetTextEnvironment()
   augroup END
 endif
-
+" }}}
 
 " ---------------
 " | 3. COMMANDS |
 " ---------------
+" All ---------------------- {{{
 :command! Vrc :normal <C-w>v<C-w>l :edit ~/.vimrc
-
+" }}}
 
 " ----------------
 " | 4. FUNCTIONS |
 " ----------------
+" Documentation ---------------------- {{{
+"     :help E124               - general function definition guidelines
+"     :help expr4              - lists all the expressions for functions
+"     :help functions          - list of all the built-in functions
+"     :help function-argument  - exactly what it sounds like lol
+"     :help internal-variables - variable scopes (and other things)
+"     :help local-variables    - exactly what it sounds like
+" }}}
+" Utility ---------------------- {{{
 function! NumberToggle()
     if(&relativenumber == 1)
         set nornu
@@ -83,7 +119,8 @@ function! HighlightToggle()
         set hlsearch
     endif
 endfunc
-
+" }}}
+" Set Environment ---------------------- {{{
 function! SetCppEnvironment()
     set tabstop=2
     set shiftwidth=2
@@ -106,7 +143,8 @@ function! SetTextEnvironment()
     set shiftwidth=4
     set smartindent
 endfunc
-
+" }}}
+" Format ---------------------- {{{
 function! FormatTextDoc()
     " Save the cursor position
     let l = line(".")
@@ -117,17 +155,19 @@ function! FormatTextDoc()
     " Restore cursor position
     call cursor(l, c)
 endfunc
-
+" }}}
 
 " ---------------
 " | 5. MAPPINGS |
 " ---------------
+" Nops ---------------------- {{{
 noremap <Up>    <Nop>
 noremap <Down>  <Nop>
 noremap <Left>  <Nop>
 noremap <Right> <Nop>
-
-" Utility Mappings
+noremap <Space> <Nop>
+" }}}
+" Utility Mappings ---------------------- {{{
 noremap <Space>ve <C-w>v<C-w>l :edit $MYVIMRC<cr>
 noremap <Space>vs :source $MYVIMRC<cr>
 noremap <Space>n :call NumberToggle()<cr>
@@ -135,61 +175,67 @@ noremap <Space>h :call HighlightToggle()<cr>
 noremap <Space>ft :call FormatTextDoc()<cr>
 noremap <Space>o o<cr>
 noremap <Space>m :messages<cr>
-
-" Movement
+noremap K :help <C-r><C-w><cr>
+" }}}
+" Movement ---------------------- {{{
 noremap H ^
 noremap L $
-
-" Buffers
+" }}}
+" Buffers ---------------------- {{{
 noremap [b :bp<cr>
 noremap ]b :bn<cr>
-noremap <Space>b :ls<cr>
 noremap <Space>d :bd<cr>
-
-" Windows
+" }}}
+" Windows ---------------------- {{{
 noremap <C-k> <C-w>k
 noremap <C-j> <C-w>j
 noremap <C-h> <C-w>h
 noremap <C-l> <C-w>l
-noremap <Space>s <C-w>s
-noremap <Space>v <C-w>v<C-w>l
-
-" Tabs
+noremap <Space>ss <C-w>s
+noremap <Space>sv <C-w>v<C-w>l
+" }}}
+" Tabs ---------------------- {{{
 noremap <Space>t :tabe<cr>
-
-" Quickfix List
+" }}}
+" Quickfix List ---------------------- {{{
 noremap [q :cp<cr>
 noremap ]q :cn<cr>
-noremap <Space>c :clist<cr>
+noremap <Space>q :clist<cr>
 noremap <C-s> :vimgrep /<C-r><C-w>/ %<cr> :clist<cr>
-
-" Writing
+" }}}
+" Writing ---------------------- {{{
 inoremap <C-u> <esc>viwUi
 vnoremap <C-q> <esc>`>a"<esc>`<i"<esc>
-
-" Abbreviations (just some examples for now so I don't forget)
+" }}}
+" Abbreviations ---------------------- {{{ 
+" (just some examples for now so I don't forget)
 iabbrev waht what
 iabbrev tehn then
-
+" }}}
+" Operator mappings ---------------------- {{{
+" https://learnvimscriptthehardway.stevelosh.com/chapters/15.html
+" https://learnvimscriptthehardway.stevelosh.com/chapters/16.html
+" }}}
 
 " -------------------
 " | 6. PLUGIN STUFF |
 " -------------------
 execute pathogen#infect()
 
-" CtrlP
-map <C-p> :CtrlP<cr>
+" CtrlP ---------------------- {{{
+map <C-P> :CtrlP<cr>
+noremap <Space>b :CtrlPBuffer<cr>
 let g:ctrlp_max_files=0
 let g:ctrlp_max_height=30
 let g:ctrlp_custom_ignore= {
   \ 'dir' : '\v[\/]\.(git)$|log$|Protos$|build-cots$|linux-64$|gen-linux-64$',
   \ 'file': '\v\.(git|log|class|jar|so)$'
   \ }
-
-" TagBar
+" }}}
+" TagBar ---------------------- {{{
 map <F8>  :TagbarToggle<CR>
-
-" GitGutter
+" }}}
+" GitGutter ---------------------- {{{
 highlight SignColumn guibg=#000000 ctermbg=0
 highlight GitGutterAdd guifg=#000000 ctermfg=2
 highlight GitGutterAddLine guifg=#000000 ctermfg=2
@@ -197,27 +243,29 @@ highlight GitGutterChange guifg=#bbbb00 ctermfg=4
 highlight GitGutterChangeLine guifg=#000000 ctermfg=4
 highlight GitGutterDelete guifg=#ff2222 ctermfg=1
 highlight GitGutterDeleteLine guifg=#000000 ctermfg=1
-
-" Fugitive
+" }}}
+" Fugitive ---------------------- {{{
 noremap <Space>gg :Git<cr>:exe "resize " . (winheight(0) * 1/2)<cr>
 noremap <Space>gl :Git log<cr><C-w>k<C-w>L
 noremap <Space>gd :Gvdiffsplit!<cr> <C-w>h
 noremap <Space>gb :G blame<cr>
-
-" Java Syntax
+" }}}
+" Java Syntax ---------------------- {{{
 highlight link javaIdentifier NONE
 highlight link javaDelimiter NONE
-
-" plantuml-syntax
+" }}}
+" plantuml-syntax ---------------------- {{{
 let g:plantuml_executable_script='~/shared/plantuml-1.2022.1.jar'
-
-" TODO: Syntastic
-
-" Vim-cpp-modern
+" }}}
+" Vim-cpp-modern ---------------------- {{{
 let g:cpp_member_highlight = 1
 let g:cpp_simple_highlight = 1
 let g:cpp_attributes_hightlight = 1
-
-" awesome-color-schemes
-colorscheme focuspoint
+" }}}
+" awesome-color-schemes ---------------------- {{{
+" Favorites: focuspoint, gotham256
+" Others: alduin, gotham256, solarized8
+colorscheme alduin
 syntax enable
+" }}}
+
