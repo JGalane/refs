@@ -51,6 +51,7 @@ set statusline+=\ ::\ Col\
 set statusline+=%2c                " Current Column
 " }}}
 
+
 " -------------------
 " | 2. AUTOCOMMANDS |
 " -------------------
@@ -125,7 +126,17 @@ function! SetCppEnvironment()
     set tabstop=2
     set shiftwidth=2
     set smartindent
-    inoremap <buffer> iff if ()<left>
+
+    inoremap <buffer> if@ if ()<cr>{<cr>}<esc><up><up>f)i
+    inoremap <buffer> elif@ else if ()<cr>{<cr>}<esc><up><up>f)i
+    inoremap <buffer> e@ else<cr>{<cr>}<esc>O
+    inoremap <buffer> for@ for ()<cr>{<cr>}<esc><up><up>f)i
+    inoremap <buffer> switch@ switch ()<cr>{<cr>}<esc>Odefault:<cr>break;<esc>>>?switch<cr>f)i
+
+    inoremap <buffer> /** /** <cr><cr>/<up><Space>
+
+    inoremap <buffer> sup@ std::unique_ptr<><left>
+
     inoremap <buffer> LOG LOG(DEVEL, "");<left><left><left>
 endfunc
 
@@ -133,7 +144,7 @@ function! SetJavaEnvironment()
     set tabstop=2
     set shiftwidth=2
     set smartindent
-    inoremap <buffer> iff if ()<left>
+    inoremap <buffer> if@ if ()<left>
     inoremap <buffer> LOG System.out.println("");<left><left><left>
 endfunc
 
@@ -208,7 +219,11 @@ inoremap <C-u> <esc>viwUi
 vnoremap <C-q> <esc>`>a"<esc>`<i"<esc>
 " }}}
 " Abbreviations ---------------------- {{{ 
-" (just some examples for now so I don't forget)
+inoremap ( ()<left>
+inoremap { {}<left>
+inoremap [ []<left>
+inoremap < <><left>
+inoremap " ""<left>
 iabbrev waht what
 iabbrev tehn then
 " }}}
