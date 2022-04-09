@@ -29,6 +29,7 @@ set so=5
 set tags=~/tags;/
 set noswapfile
 set nocompatible
+set autowriteall
 " }}}
 " Status Line ---------------------- {{{
 " NOTE: you can view HL groups with :so $VIMRUNTIME/syntax/hitest.vim
@@ -74,10 +75,12 @@ if has('autocmd')
       autocmd FileType help wincmd L
 
       " Custom format settings for different filetypes
-      autocmd FileType text :call SetTextEnvironment()
-      autocmd FileType cpp  :call SetCppEnvironment()
-      autocmd FileType java :call SetJavaEnvironment()
-      autocmd FileType proto setlocal ts=2 sw=2 smartindent
+      autocmd Filetype vim    :call SetVimEnvironment()
+      autocmd FileType text   :call SetTextEnvironment()
+      autocmd FileType cpp    :call SetCppEnvironment()
+      autocmd FileType java   :call SetJavaEnvironment()
+      autocmd FileType python :call SetPythonEnvironment()
+      autocmd FileType proto  setlocal ts=2 sw=2 smartindent
 
       autocmd BufNewFile,BufFilePre,BufRead *.md set filetype=markdown
       autocmd BufNewFile,BufFilePre,BufRead *.md :call SetTextEnvironment()
@@ -123,36 +126,64 @@ endfunc
 " }}}
 " Set Environment ---------------------- {{{
 function! SetCppEnvironment()
-    set tabstop=2
-    set shiftwidth=2
-    set smartindent
+    setlocal tabstop=2
+    setlocal shiftwidth=2
+    setlocal smartindent
 
     inoremap <buffer> if@ if ()<cr>{<cr>}<esc><up><up>f)i
     inoremap <buffer> elif@ else if ()<cr>{<cr>}<esc><up><up>f)i
     inoremap <buffer> e@ else<cr>{<cr>}<esc>O
     inoremap <buffer> for@ for ()<cr>{<cr>}<esc><up><up>f)i
+    inoremap <buffer> fori@ for (size_t i = 0; $; ++i)<cr>{<cr>}<esc><up><up>f$s
+    inoremap <buffer> forit@ for (auto it = $; ; ++it)<cr>{<cr>}<esc><up><up>f$s
     inoremap <buffer> switch@ switch ()<cr>{<cr>}<esc>Odefault:<cr>break;<esc>>>?switch<cr>f)i
+    inoremap <buffer> while@ while ()<cr>{<cr>}<esc><up><up>f)i
 
     inoremap <buffer> /** /** <cr><cr>/<up><Space>
 
     inoremap <buffer> sup@ std::unique_ptr<><left>
+    inoremap <buffer> s@ std::string 
 
     inoremap <buffer> LOG LOG(DEVEL, "");<left><left><left>
 endfunc
 
 function! SetJavaEnvironment()
-    set tabstop=2
-    set shiftwidth=2
-    set smartindent
-    inoremap <buffer> if@ if ()<left>
+    setlocal tabstop=2
+    setlocal shiftwidth=2
+    setlocal smartindent
+    inoremap <buffer> if@ if () {<cr>}<esc><up>f)i
+    inoremap <buffer> elif@ else if () {<cr>}<esc><up>f)i
+    inoremap <buffer> e@ else {<cr>}<esc>O
+    inoremap <buffer> for@ for () {<cr>}<esc><up>f)i
+    inoremap <buffer> fori@ for (int i = 0; $; i++) {<cr>}<esc><up>f$s
+    inoremap <buffer> switch@ switch () {<cr>}<esc>Odefault:<cr>break;<esc>>>?switch<cr>f)i
+    inoremap <buffer> while@ while () {<cr>}<esc><up>f)i
+
+    inoremap <buffer> /** /** <cr><cr>/<up><Space>
+
     inoremap <buffer> LOG System.out.println("");<left><left><left>
 endfunc
 
+function! SetPythonEnvironment()
+    setlocal tabstop=4
+    setlocal shiftwidth=4
+    setlocal smartindent
+endfunc
+
 function! SetTextEnvironment()
-    set textwidth=90
-    set tabstop=4
-    set shiftwidth=4
-    set smartindent
+    setlocal textwidth=90
+    setlocal tabstop=4
+    setlocal shiftwidth=4
+    setlocal smartindent
+endfunc
+
+function! SetVimEnvironment()
+    setlocal tabstop=4
+    setlocal shiftwidth=4
+    setlocal smartindent
+
+    inoremap <buffer> fun@ endfunc<esc>Ofunction! ()<left><left>
+    inoremap <buffer> aug@ augroup END<esc>Oaugroup<Space>
 endfunc
 " }}}
 " Format ---------------------- {{{
@@ -214,16 +245,23 @@ noremap ]q :cn<cr>
 noremap <Space>q :clist<cr>
 noremap <C-s> :vimgrep /<C-r><C-w>/ %<cr> :clist<cr>
 " }}}
-" Writing ---------------------- {{{
+" Writing/Text ---------------------- {{{
+noremap  <Space>u 0yypVr=o
+inoremap <C-e> <esc>A
 inoremap <C-u> <esc>viwUi
 vnoremap <C-q> <esc>`>a"<esc>`<i"<esc>
 " }}}
 " Abbreviations ---------------------- {{{ 
 inoremap ( ()<left>
+inoremap () ()
 inoremap { {}<left>
+inoremap {} {}
 inoremap [ []<left>
+inoremap [] []
 inoremap < <><left>
+inoremap <> <>
 inoremap " ""<left>
+inoremap "" ""
 iabbrev waht what
 iabbrev tehn then
 " }}}
