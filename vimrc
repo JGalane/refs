@@ -80,6 +80,7 @@ if has('autocmd')
       autocmd FileType cpp    :call SetCppEnvironment()
       autocmd FileType java   :call SetJavaEnvironment()
       autocmd FileType python :call SetPythonEnvironment()
+      autocmd FileType sh     :call SetBashEnvironment()
       autocmd FileType proto  setlocal ts=2 sw=2 smartindent
 
       autocmd BufNewFile,BufFilePre,BufRead *.md set filetype=markdown
@@ -168,6 +169,16 @@ function! SetPythonEnvironment()
     setlocal tabstop=4
     setlocal shiftwidth=4
     setlocal smartindent
+endfunc
+
+function! SetBashEnvironment()
+    setlocal tabstop=2
+    setlocal shiftwidth=2
+    setlocal smartindent
+
+    inoremap <buffer> if@ fi<esc>Oif [ $ ]; then<esc>F$s
+    inoremap <buffer> e@ <cr>else<cr>
+    inoremap <buffer> while@ done<esc>Odo<esc>Owhile [ $ ];<esc>F$s
 endfunc
 
 function! SetTextEnvironment()
