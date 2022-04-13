@@ -12,10 +12,13 @@
 " --------------
 " | 1. GENERAL |
 " --------------
+" Resources ---------------------- {{{
+"   
+"   - http://vimcasts.org/episodes/archive/
+"   - https://learnvimscriptthehardway.stevelosh.com/
+"   - https://thevaluable.dev/vim-commands-beginner/
+" }}}
 " Basic Settings ---------------------- {{{
-set tabstop=2
-set shiftwidth=2
-set textwidth=0
 set expandtab
 set smartindent
 set autoindent
@@ -30,6 +33,15 @@ set tags=~/tags;/
 set noswapfile
 set nocompatible
 set autowriteall
+
+" Configure ripgrep
+if executable('rg')
+    set grepprg=rg\ --vimgrep\ --hidden
+else
+    echoe "WARNING: Ripgrep not installed, revoking hotkey grep privileges"
+endif
+"TESTTESTTEST
+
 " }}}
 " Status Line ---------------------- {{{
 " NOTE: you can view HL groups with :so $VIMRUNTIME/syntax/hitest.vim
@@ -51,7 +63,6 @@ set statusline+=%L                 " Total Lines
 set statusline+=\ ::\ Col\ 
 set statusline+=%2c                " Current Column
 " }}}
-
 
 " -------------------
 " | 2. AUTOCOMMANDS |
@@ -75,13 +86,14 @@ if has('autocmd')
       autocmd FileType help wincmd L
 
       " Custom format settings for different filetypes
-      autocmd Filetype vim    :call SetVimEnvironment()
-      autocmd FileType text   :call SetTextEnvironment()
-      autocmd FileType cpp    :call SetCppEnvironment()
-      autocmd FileType java   :call SetJavaEnvironment()
-      autocmd FileType python :call SetPythonEnvironment()
-      autocmd FileType sh     :call SetBashEnvironment()
-      autocmd FileType proto  setlocal ts=2 sw=2 smartindent
+      autocmd Filetype vim      :call SetVimEnvironment()
+      autocmd FileType text     :call SetTextEnvironment()
+      autocmd FileType cpp      :call SetCppEnvironment()
+      autocmd FileType java     :call SetJavaEnvironment()
+      autocmd FileType python   :call SetPythonEnvironment()
+      autocmd FileType plantuml :call SetPlantEnvironment()
+      autocmd FileType sh       :call SetBashEnvironment()
+      autocmd FileType proto    setlocal ts=2 sw=2 smartindent
 
       autocmd BufNewFile,BufFilePre,BufRead *.md set filetype=markdown
       autocmd BufNewFile,BufFilePre,BufRead *.md :call SetTextEnvironment()
@@ -125,15 +137,64 @@ function! HighlightToggle()
     endif
 endfunc
 " }}}
+" Search/Grep ---------------------- {{{
+function! s:GrepOperator(type)
+    let save_register = @@
+
+    if (a:type ==# 'v')
+        "characterwise visual mode
+        execute "normal! `<v`>y"
+    elseif (a:type ==# 'char')
+        "characterwise motion
+        execute "normal! `[v`]y"
+    elseif (a:type ==# 'V') || (a:type ==# 'line')
+        " Not supporting lines for the time being...
+        return
+    else
+        return
+    endif
+
+    if (&grepprg =~# 'rg')
+        silent execute "grep! " . shellescape(@@)
+    else
+        silent execute "grep! -R " . shellescape(@@) . " ."
+    endif
+
+    copen
+
+    let @@ = save_register
+endfunc
+
+function! s:FindOperator(type)
+    let save_register = @@
+
+    if (a:type ==# 'v') || (a:type ==# 'V')
+        "characterwise/line visual mode
+        execute "normal! `<v`>y"
+    elseif (a:type ==# 'char') || (a:type ==# 'line')
+        "characterwise or standard line motion
+        execute "normal! `[v`]y"
+    else
+        return
+    endif
+
+    silent execute "lvimgrep! " . @@ . " %"
+    
+    llist
+
+    let @@ = save_register
+endfunc
+" }}}
 " Set Environment ---------------------- {{{
 function! SetCppEnvironment()
+    setlocal textwidth=0
     setlocal tabstop=2
     setlocal shiftwidth=2
     setlocal smartindent
 
     inoremap <buffer> if@ if ()<cr>{<cr>}<esc><up><up>f)i
-    inoremap <buffer> elif@ else if ()<cr>{<cr>}<esc><up><up>f)i
-    inoremap <buffer> e@ else<cr>{<cr>}<esc>O
+    inoremap <buffer> elif@ <up><esc>/}<cr>a<cr>else if ()<cr>{<cr>}<esc><up><up>f)i
+    inoremap <buffer> el@ <up><esc>/}<cr>a<cr>else<cr>{<cr>}<esc>O
     inoremap <buffer> for@ for ()<cr>{<cr>}<esc><up><up>f)i
     inoremap <buffer> fori@ for (size_t i = 0; $; ++i)<cr>{<cr>}<esc><up><up>f$s
     inoremap <buffer> forit@ for (auto it = $; ; ++it)<cr>{<cr>}<esc><up><up>f$s
@@ -141,27 +202,29 @@ function! SetCppEnvironment()
     inoremap <buffer> while@ while ()<cr>{<cr>}<esc><up><up>f)i
 
     inoremap <buffer> /** /** <cr><cr>/<up><Space>
-
+    inoremap <buffer> inc@ #include ""<left>
     inoremap <buffer> sup@ std::unique_ptr<><left>
-    inoremap <buffer> s@ std::string 
+    inoremap <buffer> ss@ std::string<Space>
 
     inoremap <buffer> LOG LOG(DEVEL, "");<left><left><left>
 endfunc
 
 function! SetJavaEnvironment()
+    setlocal textwidth=0
     setlocal tabstop=2
     setlocal shiftwidth=2
     setlocal smartindent
     inoremap <buffer> if@ if () {<cr>}<esc><up>f)i
-    inoremap <buffer> elif@ else if () {<cr>}<esc><up>f)i
-    inoremap <buffer> e@ else {<cr>}<esc>O
+    inoremap <buffer> elif@ <up><esc>/}<cr>a else if () {<cr>}<esc><up>f)i
+    inoremap <buffer> el@ <up><esc>/}<cr>a else {<cr>}<esc>O
     inoremap <buffer> for@ for () {<cr>}<esc><up>f)i
     inoremap <buffer> fori@ for (int i = 0; $; i++) {<cr>}<esc><up>f$s
     inoremap <buffer> switch@ switch () {<cr>}<esc>Odefault:<cr>break;<esc>>>?switch<cr>f)i
     inoremap <buffer> while@ while () {<cr>}<esc><up>f)i
 
-    inoremap <buffer> /** /** <cr><cr>/<up><Space>
+    inoremap <buffer> /** /** <cr><cr><left>/<up><Space>
 
+    inoremap <buffer> stack@ new Exception().printStackTrace();
     inoremap <buffer> LOG System.out.println("");<left><left><left>
 endfunc
 
@@ -169,6 +232,27 @@ function! SetPythonEnvironment()
     setlocal tabstop=4
     setlocal shiftwidth=4
     setlocal smartindent
+    
+    inoremap <buffer> if@ if :<left>
+    inoremap <buffer> elif@ elif :<left>
+    inoremap <buffer> el@ else:<left>
+    inoremap <buffer> fori@ for i in :<left>
+    inoremap <buffer> forir@ for i in range():<left><left>
+    inoremap <buffer> while@ while :<left>
+
+    inoremap <buffer> def@ def ():<esc>F(a
+endfunc
+
+function! SetPlantEnvironment()
+    setlocal textwidth=0
+    setlocal tabstop=4
+    setlocal shiftwidth=4
+    setlocal smartindent
+
+    inoremap <buffer> uml@ @enduml<esc>O@startuml<esc>o
+    inoremap <buffer> nl@ <esc>Inote left of<Space><esc>oend note<esc>O
+    inoremap <buffer> nr@ <esc>Inote right of<Space><esc>oend note<esc>O
+    inoremap <buffer> no@ <esc>Inote over<Space><esc>oend note<esc>O
 endfunc
 
 function! SetBashEnvironment()
@@ -177,7 +261,7 @@ function! SetBashEnvironment()
     setlocal smartindent
 
     inoremap <buffer> if@ fi<esc>Oif [ $ ]; then<esc>F$s
-    inoremap <buffer> e@ <cr>else<cr>
+    inoremap <buffer> el@ <cr>else<cr>
     inoremap <buffer> while@ done<esc>Odo<esc>Owhile [ $ ];<esc>F$s
 endfunc
 
@@ -189,16 +273,34 @@ function! SetTextEnvironment()
 endfunc
 
 function! SetVimEnvironment()
+    setlocal textwidth=0
     setlocal tabstop=4
     setlocal shiftwidth=4
     setlocal smartindent
 
+    inoremap <buffer> cr@ <cr<esc>a>
+    inoremap <buffer> do@ <down<esc>a>
+    inoremap <buffer> es@ <esc<esc>a>
+    inoremap <buffer> le@ <left<esc>a>
+    inoremap <buffer> ri@ <right<esc>a>
+    inoremap <buffer> sp@ <Space<esc>a>
+    inoremap <buffer> up@ <up<esc>a>
+
+    inoremap <buffer> if@ endif<esc>Oif()<left>
+    inoremap <buffer> elif@ elseif()<esc><<f)i
+    inoremap <buffer> el@ else<esc>o
+    inoremap <buffer> for@ endfor<esc>Ofor i in<Space>
+    inoremap <buffer> while@ endwhile<esc>Owhile<Space>
+
     inoremap <buffer> fun@ endfunc<esc>Ofunction! ()<left><left>
     inoremap <buffer> aug@ augroup END<esc>Oaugroup<Space>
+    inoremap <buffer> em@ echom ""<left>
+    inoremap <buffer> imbuf@ inoremap <buffer<esc>a><Space>
+    inoremap <buffer> fold@ " }}}<esc>Oi<esc>0Di" $ ---------------------- {{{<esc>F$s
 endfunc
 " }}}
 " Format ---------------------- {{{
-function! FormatTextDoc()
+function! FormatTextDoc() "TODO: this currently isn't mapped to anything
     " Save the cursor position
     let l = line(".")
     let c = col(".")
@@ -225,9 +327,10 @@ noremap <Space>ve <C-w>v<C-w>l :edit $MYVIMRC<cr>
 noremap <Space>vs :source $MYVIMRC<cr>
 noremap <Space>n :call NumberToggle()<cr>
 noremap <Space>h :call HighlightToggle()<cr>
-noremap <Space>ft :call FormatTextDoc()<cr>
 noremap <Space>o o<cr>
 noremap <Space>m :messages<cr>
+noremap <Space>r :registers<cr>
+noremap <Space>' :marks<cr>
 noremap K :help <C-r><C-w><cr>
 " }}}
 " Movement ---------------------- {{{
@@ -244,17 +347,24 @@ noremap <C-k> <C-w>k
 noremap <C-j> <C-w>j
 noremap <C-h> <C-w>h
 noremap <C-l> <C-w>l
-noremap <Space>ss <C-w>s
-noremap <Space>sv <C-w>v<C-w>l
+noremap <Space>ws <C-w>s
+noremap <Space>wv <C-w>v<C-w>l
 " }}}
 " Tabs ---------------------- {{{
 noremap <Space>t :tabe<cr>
 " }}}
-" Quickfix List ---------------------- {{{
+" Quickfix/Location Lists ---------------------- {{{
+nnoremap <silent> <Space>f :set operatorfunc=<SID>FindOperator<cr>g@
+vnoremap <silent> <Space>f :<C-u>call <SID>FindOperator(visualmode())<cr>
+noremap [l :lprev<cr>
+noremap ]l :lnext<cr>
+noremap <Space>l :llist<cr>
+
+nnoremap <silent> <Space>s :set operatorfunc=<SID>GrepOperator<cr>g@
+vnoremap <silent> <Space>s :<C-u>call <SID>GrepOperator(visualmode())<cr>
 noremap [q :cp<cr>
 noremap ]q :cn<cr>
 noremap <Space>q :clist<cr>
-noremap <C-s> :vimgrep /<C-r><C-w>/ %<cr> :clist<cr>
 " }}}
 " Writing/Text ---------------------- {{{
 noremap  <Space>u 0yypVr=o
@@ -263,16 +373,13 @@ inoremap <C-u> <esc>viwUi
 vnoremap <C-q> <esc>`>a"<esc>`<i"<esc>
 " }}}
 " Abbreviations ---------------------- {{{ 
-inoremap ( ()<left>
-inoremap () ()
-inoremap { {}<left>
-inoremap {} {}
-inoremap [ []<left>
-inoremap [] []
-inoremap < <><left>
-inoremap <> <>
-inoremap " ""<left>
-inoremap "" ""
+inoremap (( ()<left>
+inoremap {{ {}<left>
+inoremap [[ []<left>
+inoremap << <><left>
+inoremap "" ""<left>
+inoremap '' ''<left>
+
 iabbrev waht what
 iabbrev tehn then
 " }}}
@@ -327,8 +434,8 @@ let g:cpp_simple_highlight = 1
 let g:cpp_attributes_hightlight = 1
 " }}}
 " awesome-color-schemes ---------------------- {{{
-" Favorites: focuspoint, gotham256
-" Others: alduin, gotham256, solarized8
+" Favorites: focuspoint, alduin, gotham256
+" Others: gotham256, solarized8
 colorscheme alduin
 syntax enable
 " }}}
