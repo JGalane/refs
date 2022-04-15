@@ -38,10 +38,8 @@ set autowriteall
 if executable('rg')
     set grepprg=rg\ --vimgrep\ --hidden
 else
-    echoe "WARNING: Ripgrep not installed, revoking hotkey grep privileges"
+    echoe "WARNING: Ripgrep not installed"
 endif
-"TESTTESTTEST
-
 " }}}
 " Status Line ---------------------- {{{
 " NOTE: you can view HL groups with :so $VIMRUNTIME/syntax/hitest.vim
@@ -105,7 +103,17 @@ endif
 " | 3. COMMANDS |
 " ---------------
 " All ---------------------- {{{
-:command! Vrc :normal <C-w>v<C-w>l :edit ~/.vimrc
+if (&grepprg =~# 'rg')
+    :command! -nargs=+ Cppgrep   :call FileSpecificGrep('cpp', <q-args>)
+    :command! -nargs=+ Javagrep  :call FileSpecificGrep('java', <q-args>)
+    :command! -nargs=+ Xmlgrep   :call FileSpecificGrep('xml', <q-args>)
+    :command! -nargs=+ Makegrep  :call FileSpeficicGrep('make', <q-args>)
+    :command! -nargs=+ Protogrep :call FileSpeficicGrep('proto', <q-args>)
+    :command! -nargs=+ Othergrep :call FileSpeficicGrep('other', <q-args>)
+    :command! -nargs=+ Testgrep  :call FileSpeficicGrep('test', <q-args>)
+else
+    :command! -nargs=+ Grepcpp :echom "TODO: no ripgrep, do regular grep"<cr>
+endif
 " }}}
 
 " ----------------
@@ -138,6 +146,30 @@ function! HighlightToggle()
 endfunc
 " }}}
 " Search/Grep ---------------------- {{{
+function! FileSpecificGrep(filetype, pattern)
+    if (a:filetype ==? 'cpp')
+        let l:fileargs = '*.{cc,hh,cpp,hpp}'
+    elseif (a:filetype ==? 'java')
+        let l:fileargs = '*.{java}'
+    elseif (a:filetype ==? 'proto')
+        let l:fileargs = '*.{proto}'
+    elseif (a:filetype ==? 'xml')
+        let l:fileargs = '*.{xml}'
+    elseif (a:filetype ==? 'make')
+        let l:fileargs = '*.{mk}'
+    elseif (a:filetype ==? 'test')
+        let l:fileargs = 'Test*.{cc,hh,cpp,hpp}'
+    elseif (a:filetype ==? 'other')
+        let l:fileargs = '!*.{cc,hh,cpp,hpp,java,xml,mk,proto}'
+    else
+        echoe "Invalid filetype"
+        return
+    endif
+
+    silent execute "grep! \"" . a:pattern . "\" -g \"" . l:fileargs . "\" ."
+    copen
+endfunc
+
 function! s:GrepOperator(type)
     let save_register = @@
 
@@ -286,8 +318,8 @@ function! SetVimEnvironment()
     inoremap <buffer> sp@ <Space<esc>a>
     inoremap <buffer> up@ <up<esc>a>
 
-    inoremap <buffer> if@ endif<esc>Oif()<left>
-    inoremap <buffer> elif@ elseif()<esc><<f)i
+    inoremap <buffer> if@ endif<esc>Oif ()<left>
+    inoremap <buffer> elif@ elseif ()<esc>i
     inoremap <buffer> el@ else<esc>o
     inoremap <buffer> for@ endfor<esc>Ofor i in<Space>
     inoremap <buffer> while@ endwhile<esc>Owhile<Space>
@@ -364,7 +396,7 @@ nnoremap <silent> <Space>s :set operatorfunc=<SID>GrepOperator<cr>g@
 vnoremap <silent> <Space>s :<C-u>call <SID>GrepOperator(visualmode())<cr>
 noremap [q :cp<cr>
 noremap ]q :cn<cr>
-noremap <Space>q :clist<cr>
+noremap <Space>q :copen<cr>
 " }}}
 " Writing/Text ---------------------- {{{
 noremap  <Space>u 0yypVr=o
