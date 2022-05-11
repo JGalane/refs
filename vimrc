@@ -104,15 +104,15 @@ endif
 " ---------------
 " All ---------------------- {{{
 if (&grepprg =~# 'rg')
-    :command! -nargs=+ Cppgrep   :call FileSpecificGrep('cpp', <q-args>)
-    :command! -nargs=+ Javagrep  :call FileSpecificGrep('java', <q-args>)
-    :command! -nargs=+ Xmlgrep   :call FileSpecificGrep('xml', <q-args>)
-    :command! -nargs=+ Makegrep  :call FileSpeficicGrep('make', <q-args>)
-    :command! -nargs=+ Protogrep :call FileSpeficicGrep('proto', <q-args>)
-    :command! -nargs=+ Othergrep :call FileSpeficicGrep('other', <q-args>)
-    :command! -nargs=+ Testgrep  :call FileSpeficicGrep('test', <q-args>)
+    :command! -nargs=+ Cppgrep   :call JG_FileSpecGrep('cpp', <q-args>)
+    :command! -nargs=+ Javagrep  :call JG_FileSpecGrep('java', <q-args>)
+    :command! -nargs=+ Xmlgrep   :call JG_FileSpecGrep('xml', <q-args>)
+    :command! -nargs=+ Makegrep  :call JG_FileSpecGrep('make', <q-args>)
+    :command! -nargs=+ Protogrep :call JG_FileSpecGrep('proto', <q-args>)
+    :command! -nargs=+ Othergrep :call JG_FileSpecGrep('other', <q-args>)
+    :command! -nargs=+ Testgrep  :call JG_FileSpecGrep('test', <q-args>)
 else
-    :command! -nargs=+ Grepcpp :echom "TODO: no ripgrep, do regular grep"<cr>
+    :command! -nargs=+ Grepcpp :call JG_Warn("TODO: no ripgrep, do regular grep")<cr>
 endif
 " }}}
 
@@ -128,25 +128,33 @@ endif
 "     :help local-variables    - exactly what it sounds like
 " }}}
 " Utility ---------------------- {{{
-function! NumberToggle()
+function! JG_Warn(msg)
+    echohl ErrorMsg
+    echom a:msg
+    echohl NONE
+endfunction
+
+function! JG_NumberToggle()
     if(&relativenumber == 1)
         set nornu
         set number
     else
         set rnu
     endif
-endfunc
+endfunction
 
-function! HighlightToggle()
+function! JG_HighlightToggle()
     if(&hlsearch == 1)
         set nohlsearch
     else
         set hlsearch
     endif
-endfunc
+endfunction
 " }}}
 " Search/Grep ---------------------- {{{
-function! FileSpecificGrep(filetype, pattern)
+function! JG_FileSpecGrep(filetype, pattern)
+    let ft = &filetype
+
     if (a:filetype ==? 'cpp')
         let l:fileargs = '*.{cc,hh,cpp,hpp}'
     elseif (a:filetype ==? 'java')
@@ -166,11 +174,15 @@ function! FileSpecificGrep(filetype, pattern)
         return
     endif
 
-    silent execute "grep! \"" . a:pattern . "\" -g \"" . l:fileargs . "\" ."
+    if (&grepprg =~# 'rg')
+        silent execute "grep! " . a:pattern . " -g \"" . l:fileargs . "\" ."
+    else
+        silent execute "grep! -R " . shellescape(@@) . "--include=" . l:fileargs " ."
+    endif
     copen
-endfunc
+endfunction
 
-function! s:GrepOperator(type)
+function! JG_GrepOperator(type)
     let save_register = @@
 
     if (a:type ==# 'v')
@@ -195,9 +207,30 @@ function! s:GrepOperator(type)
     copen
 
     let @@ = save_register
-endfunc
+endfunction
 
-function! s:FindOperator(type)
+function! JG_FileSpecGrepOp(type)
+    let save_register = @@
+
+    if (a:type ==# 'v')
+        "characterwise visual mode
+        execute "normal! `<v`>y"
+    elseif (a:type ==# 'char')
+        "characterwise motion
+        execute "normal! `[v`]y"
+    elseif (a:type ==# 'V') || (a:type ==# 'line')
+        " Not supporting lines for the time being...
+        return
+    else
+        return
+    endif
+
+    :call JG_FileSpecGrep(&filetype, shellescape(@@))
+
+    let @@ = save_register
+endfunction
+
+function! JG_FindOperator(type)
     let save_register = @@
 
     if (a:type ==# 'v') || (a:type ==# 'V')
@@ -212,10 +245,10 @@ function! s:FindOperator(type)
 
     silent execute "lvimgrep! " . @@ . " %"
     
-    llist
+    lopen
 
     let @@ = save_register
-endfunc
+endfunction
 " }}}
 " Set Environment ---------------------- {{{
 function! SetCppEnvironment()
@@ -239,7 +272,7 @@ function! SetCppEnvironment()
     inoremap <buffer> ss@ std::string<Space>
 
     inoremap <buffer> LOG LOG(DEVEL, "");<left><left><left>
-endfunc
+endfunction
 
 function! SetJavaEnvironment()
     setlocal textwidth=0
@@ -258,7 +291,7 @@ function! SetJavaEnvironment()
 
     inoremap <buffer> stack@ new Exception().printStackTrace();
     inoremap <buffer> LOG System.out.println("");<left><left><left>
-endfunc
+endfunction
 
 function! SetPythonEnvironment()
     setlocal tabstop=4
@@ -273,7 +306,7 @@ function! SetPythonEnvironment()
     inoremap <buffer> while@ while :<left>
 
     inoremap <buffer> def@ def ():<esc>F(a
-endfunc
+endfunction
 
 function! SetPlantEnvironment()
     setlocal textwidth=0
@@ -285,24 +318,24 @@ function! SetPlantEnvironment()
     inoremap <buffer> nl@ <esc>Inote left of<Space><esc>oend note<esc>O
     inoremap <buffer> nr@ <esc>Inote right of<Space><esc>oend note<esc>O
     inoremap <buffer> no@ <esc>Inote over<Space><esc>oend note<esc>O
-endfunc
+endfunction
 
 function! SetBashEnvironment()
-    setlocal tabstop=2
-    setlocal shiftwidth=2
+    setlocal tabstop=4
+    setlocal shiftwidth=4
     setlocal smartindent
 
     inoremap <buffer> if@ fi<esc>Oif [ $ ]; then<esc>F$s
     inoremap <buffer> el@ <cr>else<cr>
     inoremap <buffer> while@ done<esc>Odo<esc>Owhile [ $ ];<esc>F$s
-endfunc
+endfunction
 
 function! SetTextEnvironment()
     setlocal textwidth=90
     setlocal tabstop=4
     setlocal shiftwidth=4
     setlocal smartindent
-endfunc
+endfunction
 
 function! SetVimEnvironment()
     setlocal textwidth=0
@@ -324,12 +357,12 @@ function! SetVimEnvironment()
     inoremap <buffer> for@ endfor<esc>Ofor i in<Space>
     inoremap <buffer> while@ endwhile<esc>Owhile<Space>
 
-    inoremap <buffer> fun@ endfunc<esc>Ofunction! ()<left><left>
+    inoremap <buffer> fun@ endfunction<esc>Ofunction! ()<left><left>
     inoremap <buffer> aug@ augroup END<esc>Oaugroup<Space>
     inoremap <buffer> em@ echom ""<left>
     inoremap <buffer> imbuf@ inoremap <buffer<esc>a><Space>
     inoremap <buffer> fold@ " }}}<esc>Oi<esc>0Di" $ ---------------------- {{{<esc>F$s
-endfunc
+endfunction
 " }}}
 " Format ---------------------- {{{
 function! FormatTextDoc() "TODO: this currently isn't mapped to anything
@@ -341,7 +374,7 @@ function! FormatTextDoc() "TODO: this currently isn't mapped to anything
     :normal gggwG
     " Restore cursor position
     call cursor(l, c)
-endfunc
+endfunction
 " }}}
 
 " ---------------
@@ -357,8 +390,8 @@ noremap <Space> <Nop>
 " Utility Mappings ---------------------- {{{
 noremap <Space>ve <C-w>v<C-w>l :edit $MYVIMRC<cr>
 noremap <Space>vs :source $MYVIMRC<cr>
-noremap <Space>n :call NumberToggle()<cr>
-noremap <Space>h :call HighlightToggle()<cr>
+noremap <Space>n :call JG_NumberToggle()<cr>
+noremap <Space>h :call JG_HighlightToggle()<cr>
 noremap <Space>o o<cr>
 noremap <Space>m :messages<cr>
 noremap <Space>r :registers<cr>
@@ -386,14 +419,16 @@ noremap <Space>wv <C-w>v<C-w>l
 noremap <Space>t :tabe<cr>
 " }}}
 " Quickfix/Location Lists ---------------------- {{{
-nnoremap <silent> <Space>f :set operatorfunc=<SID>FindOperator<cr>g@
-vnoremap <silent> <Space>f :<C-u>call <SID>FindOperator(visualmode())<cr>
+nnoremap <silent> <Space>f :set operatorfunc=JG_FindOperator<cr>g@
+vnoremap <silent> <Space>f :<C-u>call JG_FindOperator(visualmode())<cr>
 noremap [l :lprev<cr>
 noremap ]l :lnext<cr>
-noremap <Space>l :llist<cr>
+noremap <Space>l :lopen<cr>
 
-nnoremap <silent> <Space>s :set operatorfunc=<SID>GrepOperator<cr>g@
-vnoremap <silent> <Space>s :<C-u>call <SID>GrepOperator(visualmode())<cr>
+nnoremap <silent> <Space>s :set operatorfunc=JG_FileSpecGrepOp<cr>g@
+vnoremap <silent> <Space>s :<C-u>call JG_GrepOperator(visualmode())<cr>
+nnoremap <silent> <Space>S :set operatorfunc=JG_GrepOperator<cr>g@
+vnoremap <silent> <Space>S :<C-u>call JG_GrepOperator(visualmode())<cr>
 noremap [q :cp<cr>
 noremap ]q :cn<cr>
 noremap <Space>q :copen<cr>
