@@ -89,6 +89,7 @@ if has('autocmd')
       autocmd FileType cpp      :call SetCppEnvironment()
       autocmd FileType java     :call SetJavaEnvironment()
       autocmd FileType python   :call SetPythonEnvironment()
+      autocmd FileType haskell  :call SetHaskellEnvironment()
       autocmd FileType plantuml :call SetPlantEnvironment()
       autocmd FileType sh       :call SetBashEnvironment()
       autocmd FileType proto    setlocal ts=2 sw=2 smartindent
@@ -260,13 +261,18 @@ function! SetCppEnvironment()
     inoremap <buffer> if@ if ()<cr>{<cr>}<esc><up><up>f)i
     inoremap <buffer> elif@ <up><esc>/}<cr>a<cr>else if ()<cr>{<cr>}<esc><up><up>f)i
     inoremap <buffer> el@ <up><esc>/}<cr>a<cr>else<cr>{<cr>}<esc>O
+    inoremap <buffer> ifn@ if ()<cr>{<cr>}<esc><up><up>f)inullptr<Space>!=<Space>
     inoremap <buffer> for@ for ()<cr>{<cr>}<esc><up><up>f)i
     inoremap <buffer> fori@ for (size_t i = 0; $; ++i)<cr>{<cr>}<esc><up><up>f$s
     inoremap <buffer> forit@ for (auto it = $; ; ++it)<cr>{<cr>}<esc><up><up>f$s
     inoremap <buffer> switch@ switch ()<cr>{<cr>}<esc>Odefault:<cr>break;<esc>>>?switch<cr>f)i
     inoremap <buffer> while@ while ()<cr>{<cr>}<esc><up><up>f)i
 
+    inoremap <buffer> //t@ //<Space>TODO:<Space>
+    inoremap <buffer> //n@ //<Space>NOTE:<Space>
     inoremap <buffer> /** /** <cr><cr>/<up><Space>
+    inoremap <buffer> /*t /** <cr><cr>/<up><Space>TODO<cr><Space><Space>-<Space>
+    inoremap <buffer> /*n /** <cr><cr>/<up><Space>NOTE<cr><Space><Space>-<Space>
     inoremap <buffer> inc@ #include ""<left>
     inoremap <buffer> sup@ std::unique_ptr<><left>
     inoremap <buffer> ss@ std::string<Space>
@@ -306,6 +312,17 @@ function! SetPythonEnvironment()
     inoremap <buffer> while@ while :<left>
 
     inoremap <buffer> def@ def ():<esc>F(a
+endfunction
+
+function! SetHaskellEnvironment()
+    setlocal tabstop=4
+    setlocal shiftwidth=4
+    setlocal smartindent
+
+    inoremap <buffer> {-@ {-<cr><esc>0Di--<cr><esc>0Di-}<up><Space>
+
+    " TODO: Not too hot about this mapping right now, figure out something else
+    nnoremap <buffer> <Tab>g :!ghci<cr> 
 endfunction
 
 function! SetPlantEnvironment()
